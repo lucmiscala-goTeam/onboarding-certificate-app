@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate of Acknowledgement</title>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#0b153e;
+    --primary:#082f9c;
+    --accent:#2d8fff;
+    --paper:#f4f6fb;
+    --paper-dim:#e6eaf4;
+    --slate:#5b6a8c;
+    --line:rgba(11,21,62,0.14);
+    --good:#1f9d55;
+    --bad:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    line-height:1.55;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:40px 20px 80px;}
+
+  .masthead{text-align:center;margin-bottom:8px;}
+  .masthead .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 10px;
+  }
+  .masthead h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,4vw,32px);
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  .masthead p{color:var(--slate);font-size:14.5px;max-width:48ch;margin:0 auto 28px;}
+
+  .status-rail{display:flex;gap:10px;justify-content:center;margin-bottom:32px;flex-wrap:wrap;}
+  .status-pill{
+    display:flex;align-items:center;gap:7px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    padding:6px 12px;border-radius:20px;border:1px solid var(--line);
+    background:#fff;color:var(--slate);
+  }
+  .status-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none;}
+  .status-pill.done{border-color:rgba(31,157,85,0.35);background:rgba(31,157,85,0.06);color:var(--good);}
+  .status-pill.done .dot{background:var(--good);}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:24px;margin-bottom:20px;}
+  .card h2{font-family:'Fraunces',serif;font-weight:600;font-size:17px;margin:0 0 4px;color:var(--ink);}
+  .card .role-tag{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--primary);
+    text-transform:uppercase;letter-spacing:0.04em;margin:0 0 16px;
+  }
+  .card.pending{border-style:dashed;}
+  .pending-fill-btn{
+    background:var(--primary);color:#fff;border:none;padding:10px 16px;
+    border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;
+  }
+  .pending-fill-btn:hover{background:var(--ink);}
+  .pending-note{color:var(--slate);font-size:13.5px;margin:0 0 14px;}
+
+  label{display:block;font-size:12.5px;font-weight:500;color:var(--slate);margin-bottom:6px;}
+  input[type=text], input[type=date]{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:5px;
+    font-size:14.5px;font-family:inherit;color:var(--ink);margin-bottom:16px;background:var(--paper);
+  }
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+
+  canvas.sigpad{
+    width:100%;height:140px;border:1px solid var(--line);border-radius:5px;
+    background:#fff;touch-action:none;cursor:crosshair;
+  }
+  .sig-row{display:flex;justify-content:space-between;align-items:center;margin:6px 0 18px;}
+  .sig-row span{font-size:12px;color:var(--slate);}
+  .clear-btn{background:none;border:none;color:var(--primary);font-size:12.5px;cursor:pointer;text-decoration:underline;padding:0;}
+
+  .primary-btn{
+    background:var(--primary);color:#fff;border:none;padding:10px 18px;
+    border-radius:6px;font-size:14.5px;font-weight:500;cursor:pointer;
+  }
+  .primary-btn:hover{background:var(--ink);}
+  .primary-btn:disabled{background:var(--line);color:var(--slate);cursor:not-allowed;}
+  .ghost-btn{
+    background:#fff;color:var(--primary);border:1px solid var(--line);padding:10px 16px;
+    border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;
+  }
+  .ghost-btn:hover{border-color:var(--primary);}
+
+  .signed-grid{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:14px;}
+  .signed-field{min-width:140px;}
+  .signed-field .k{font-size:11px;color:var(--slate);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:3px;}
+  .signed-field .v{font-size:14.5px;color:var(--ink);font-weight:500;}
+  .sig-preview{border-top:1px solid var(--line);padding-top:14px;display:flex;align-items:center;gap:16px;}
+  .sig-preview img{height:56px;filter:invert(9%) sepia(48%) saturate(1800%) hue-rotate(215deg);}
+  .sig-meta{font-size:12px;color:var(--slate);}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+
+  .callout{
+    border-left:3px solid var(--accent);background:var(--paper-dim);padding:12px 16px;
+    font-size:13.5px;color:var(--ink);border-radius:0 4px 4px 0;margin-bottom:20px;
+  }
+  .callout.error{border-left-color:var(--bad);background:#fdecea;color:#7a251b;}
+
+  .footer-note{text-align:center;font-size:12px;color:var(--slate);margin-top:36px;font-family:'JetBrains Mono',monospace;}
+
+  .center-state{text-align:center;padding:60px 20px;color:var(--slate);font-size:14.5px;}
+  .spinner{
+    width:22px;height:22px;border-radius:50%;
+    border:2.5px solid var(--line);border-top-color:var(--accent);
+    margin:0 auto 14px;animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .copy-link-row{
+    display:flex;align-items:center;gap:8px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--slate);
+  }
+  .copy-link-row button{
+    background:none;border:1px solid var(--line);border-radius:5px;
+    padding:5px 9px;font-size:11.5px;color:var(--primary);cursor:pointer;
+  }
+  .copy-link-row button:hover{border-color:var(--primary);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">GoTeam · onboarding</p>
+    <h1 id="doc-title">Certificate of Acknowledgement</h1>
+    <p id="doc-intro">This certifies that the onboarding employee and leadership coach named below acknowledge completion of the onboarding engagement.</p>
+  </div>
+
+  <div id="loading-state" class="center-state">
+    <div class="spinner"></div>
+    Loading this certificate…
+  </div>
+
+  <div id="error-state" style="display:none;"></div>
+
+  <div id="app" style="display:none;">
+    <div class="status-rail" id="status-rail"></div>
+    <div class="callout" id="handoff-hint" style="display:none;"></div>
+    <div id="cards"></div>
+    <div class="actions" id="global-actions"></div>
+  </div>
+
+  <p class="footer-note">Sign anytime, any order · state lives at this link, not on your device</p>
+</div>
+
+<script>
+/* =========================================================================
+   CONFIG
+   - Edit `parties` to change what the certificate collects.
+   - Set `apiUrl` to your Power Automate HTTP-trigger URL. It must support:
+       GET  {apiUrl}?id=CERT_ID           -> returns { parties: {...} }
+       POST {apiUrl}                      -> body: { id, partyId, values,
+                                              signatureDataUrl, signedAt }
+                                              returns the updated
+                                              { parties: {...} }
+   ========================================================================= */
+const CONFIG = {
+  documentTitle: "Certificate of Acknowledgement",
+  intro: "This certifies that the onboarding employee and leadership coach named below acknowledge completion of the onboarding engagement.",
+  apiUrl: "https://default23dfa17996b240f6abd47fea317f0a.f6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/00/workflows/ca145dd75f634c01be6102dfa58eaf73/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=0IOJIlPdpKEFcssYcUSl6ote13oOKbOmebyiEVeInU0",
+  pollIntervalMs: 15000,
+  parties: [
+    {
+      id: "onboardee",
+      role: "Onboarding Employee",
+      fields: [
+        { id: "name", label: "Full name", type: "text", required: true }
+      ]
+    },
+    {
+      id: "coach",
+      role: "Leadership Coach",
+      fields: [
+        { id: "name", label: "Full name", type: "text", required: true }
+      ]
+    }
+  ]
+};
+/* ========================================================================= */
+
+let state = { parties: {} };
+CONFIG.parties.forEach(p => state.parties[p.id] = null);
+
+let certificateId = null;
+let activeFormPartyId = null;
+let activeSigPad = null;
+let pollHandle = null;
+
+document.getElementById('doc-title').textContent = CONFIG.documentTitle;
+document.getElementById('doc-intro').textContent = CONFIG.intro;
+
+// ---- bootstrap -------------------------------------------------------------
+async function init(){
+  certificateId = new URLSearchParams(window.location.search).get('id');
+
+  if (!certificateId){
+    showError("This link is missing a certificate ID. Ask whoever sent it to confirm the link came from the onboarding notification, not typed in manually.");
+    return;
+  }
+  if (CONFIG.apiUrl.startsWith('REPLACE_WITH')){
+    showError("This app hasn't been connected to its data source yet (CONFIG.apiUrl is still a placeholder). If you're seeing this in testing, that's expected — plug in the Power Automate trigger URL to go live.");
+    return;
+  }
+
+  try {
+    state = await fetchState(certificateId);
+    showApp();
+    render();
+    startPolling();
+  } catch (err){
+    showError("Couldn't load this certificate. " + err.message);
+  }
+}
+
+function showApp(){
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+function showError(message){
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  const el = document.getElementById('error-state');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="callout error">${message}</div>`;
+}
+
+function startPolling(){
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(async () => {
+    // don't clobber someone mid-form
+    if (activeFormPartyId !== null) return;
+    try {
+      const fresh = await fetchState(certificateId);
+      state = fresh;
+      render();
+    } catch (err){
+      // silent — a failed background refresh isn't worth interrupting the page for
+    }
+  }, CONFIG.pollIntervalMs);
+}
+
+// ---- API calls --------------------------------------------------------------
+async function fetchState(id){
+  const res = await fetch(CONFIG.apiUrl, {
+    method: 'GET',
+    headers: { 'x-certificate-id': id }
+  });
+  if (!res.ok) throw new Error(`server returned ${res.status}`);
+  const data = await res.json();
+  const normalized = { parties: {} };
+  CONFIG.parties.forEach(p => normalized.parties[p.id] = (data.parties && data.parties[p.id]) || null);
+  return normalized;
+}
+
+async function saveParty(partyId, payload){
+  const res = await fetch(CONFIG.apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: certificateId, partyId, ...payload })
+  });
+  if (!res.ok) throw new Error(`server returned ${res.status}`);
+  const data = await res.json();
+  const normalized = { parties: {} };
+  CONFIG.parties.forEach(p => normalized.parties[p.id] = (data.parties && data.parties[p.id]) || null);
+  return normalized;
+}
+
+// ---- rendering ---------------------------------------------------------
+function render(){
+  renderStatusRail();
+  renderCards();
+  renderGlobalActions();
+  renderHandoffHint();
+}
+
+function renderStatusRail(){
+  const rail = document.getElementById('status-rail');
+  rail.innerHTML = '';
+  CONFIG.parties.forEach(p => {
+    const done = !!state.parties[p.id];
+    const pill = document.createElement('div');
+    pill.className = 'status-pill' + (done ? ' done' : '');
+    pill.innerHTML = `<span class="dot"></span>${p.role} ${done ? '— signed' : '— pending'}`;
+    rail.appendChild(pill);
+  });
+}
+
+function renderHandoffHint(){
+  const hint = document.getElementById('handoff-hint');
+  const signedCount = CONFIG.parties.filter(p => state.parties[p.id]).length;
+  if (signedCount > 0 && signedCount < CONFIG.parties.length){
+    hint.style.display = 'block';
+    hint.textContent = "Waiting on the other party — they can open this same link anytime to add their part. This page checks for updates automatically.";
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function renderCards(){
+  const container = document.getElementById('cards');
+  container.innerHTML = '';
+  CONFIG.parties.forEach(party => {
+    const partyState = state.parties[party.id];
+    if (partyState){
+      container.appendChild(buildSignedCard(party, partyState));
+    } else if (activeFormPartyId === party.id){
+      container.appendChild(buildFormCard(party));
+    } else {
+      container.appendChild(buildPendingCard(party));
+    }
+  });
+}
+
+function buildPendingCard(party){
+  const el = document.createElement('div');
+  el.className = 'card pending';
+  el.innerHTML = `
+    <p class="role-tag">${party.role}</p>
+    <p class="pending-note">Not yet filled in.</p>
+    <button class="pending-fill-btn" data-party="${party.id}">I'm the ${party.role} — fill in &amp; sign</button>
+  `;
+  el.querySelector('button').addEventListener('click', () => {
+    activeFormPartyId = party.id;
+    render();
+  });
+  return el;
+}
+
+function buildFormCard(party){
+  const el = document.createElement('div');
+  el.className = 'card';
+  const fieldsHtml = party.fields.map(f => `
+    <label for="f-${party.id}-${f.id}">${f.label}${f.required ? ' *' : ''}</label>
+    <input type="${f.type}" id="f-${party.id}-${f.id}" data-field="${f.id}" />
+  `).join('');
+
+  el.innerHTML = `
+    <p class="role-tag">${party.role}</p>
+    ${fieldsHtml}
+    <label>Signature</label>
+    <canvas class="sigpad" id="sigpad-${party.id}"></canvas>
+    <div class="sig-row">
+      <span>Draw with mouse or finger</span>
+      <button class="clear-btn" type="button" id="clear-${party.id}">Clear</button>
+    </div>
+    <button class="primary-btn" id="sign-${party.id}">Sign &amp; lock this section</button>
+    <div id="sign-error-${party.id}" class="callout error" style="display:none;margin-top:14px;"></div>
+  `;
+
+  setTimeout(() => {
+    const canvas = document.getElementById(`sigpad-${party.id}`);
+    resizeCanvas(canvas);
+    activeSigPad = new SignaturePad(canvas, { penColor: '#0b153e' });
+    document.getElementById(`clear-${party.id}`).addEventListener('click', () => activeSigPad.clear());
+  }, 0);
+
+  el.querySelector(`#sign-${party.id}`).addEventListener('click', async () => {
+    const values = {};
+    let missing = false;
+    party.fields.forEach(f => {
+      const input = document.getElementById(`f-${party.id}-${f.id}`);
+      values[f.id] = input.value.trim();
+      if (f.required && !values[f.id]) missing = true;
+    });
+    const errBox = document.getElementById(`sign-error-${party.id}`);
+    errBox.style.display = 'none';
+
+    if (missing){ errBox.textContent = 'Please fill in all required fields before signing.'; errBox.style.display = 'block'; return; }
+    if (activeSigPad.isEmpty()){ errBox.textContent = 'Please provide a signature before signing.'; errBox.style.display = 'block'; return; }
+
+    const signBtn = document.getElementById(`sign-${party.id}`);
+    signBtn.disabled = true;
+    signBtn.textContent = 'Saving…';
+
+    const payload = {
+      values,
+      signatureDataUrl: activeSigPad.toDataURL('image/png'),
+      signedAt: new Date().toISOString()
+    };
+
+    try {
+      state = await saveParty(party.id, payload);
+      activeFormPartyId = null;
+      activeSigPad = null;
+      render();
+    } catch (err){
+      signBtn.disabled = false;
+      signBtn.textContent = 'Sign & lock this section';
+      errBox.textContent = "Couldn't save your signature — check your connection and try again. " + err.message;
+      errBox.style.display = 'block';
+    }
+  });
+
+  return el;
+}
+
+function buildSignedCard(party, partyState){
+  const el = document.createElement('div');
+  el.className = 'card';
+  const fieldsHtml = party.fields.map(f => `
+    <div class="signed-field">
+      <div class="k">${f.label}</div>
+      <div class="v">${escapeHtml(partyState.values[f.id])}</div>
+    </div>
+  `).join('');
+  const signedDate = new Date(partyState.signedAt);
+  el.innerHTML = `
+    <p class="role-tag">${party.role}</p>
+    <div class="signed-grid">${fieldsHtml}</div>
+    <div class="sig-preview">
+      <img src="${partyState.signatureDataUrl}" alt="${party.role} signature" />
+      <span class="sig-meta">Signed ${signedDate.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</span>
+    </div>
+  `;
+  return el;
+}
+
+function renderGlobalActions(){
+  const actions = document.getElementById('global-actions');
+  actions.innerHTML = '';
+
+  const allSigned = CONFIG.parties.every(p => state.parties[p.id]);
+
+  const copyRow = document.createElement('div');
+  copyRow.className = 'copy-link-row';
+  copyRow.innerHTML = `<span>This link:</span><button id="copy-link-btn">Copy</button>`;
+  actions.appendChild(copyRow);
+  copyRow.querySelector('button').addEventListener('click', () => {
+    navigator.clipboard.writeText(window.location.href);
+    const btn = copyRow.querySelector('button');
+    const original = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(() => btn.textContent = original, 1500);
+  });
+
+  if (allSigned){
+    const pdfBtn = document.createElement('button');
+    pdfBtn.className = 'primary-btn';
+    pdfBtn.textContent = 'Generate certificate PDF';
+    pdfBtn.addEventListener('click', generatePdf);
+    actions.appendChild(pdfBtn);
+  }
+}
+
+// ---- PDF generation (unchanged — still fully client-side) -------------------
+async function generatePdf(){
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const pdfDoc = await PDFDocument.create();
+  let page = pdfDoc.addPage([612, 792]);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const ink = rgb(0.043, 0.082, 0.243);
+  const primary = rgb(0.031, 0.184, 0.612);
+  const slate = rgb(0.357, 0.416, 0.545);
+
+  let y = 730;
+  const marginX = 60;
+
+  page.drawText(CONFIG.documentTitle, { x: marginX, y, size: 22, font: fontBold, color: ink });
+  y -= 28;
+  page.drawText(wrapText(CONFIG.intro, font, 11, 612 - marginX*2), { x: marginX, y, size: 11, font, color: slate, lineHeight: 15 });
+  y -= 50;
+
+  for (const party of CONFIG.parties){
+    const ps = state.parties[party.id];
+
+    if (y < 220){
+      page = pdfDoc.addPage([612, 792]);
+      y = 730;
+    }
+
+    page.drawLine({ start:{x:marginX,y:y+10}, end:{x:612-marginX,y:y+10}, thickness:1, color: rgb(0.9,0.91,0.95) });
+    page.drawText(party.role.toUpperCase(), { x: marginX, y, size: 10, font: fontBold, color: primary });
+    y -= 22;
+
+    for (const f of party.fields){
+      page.drawText(`${f.label}:`, { x: marginX, y, size: 11, font, color: slate });
+      page.drawText(`${ps.values[f.id]}`, { x: marginX + 130, y, size: 11, font: fontBold, color: ink });
+      y -= 20;
+    }
+
+    const signedDate = new Date(ps.signedAt);
+    page.drawText('Date signed:', { x: marginX, y, size: 11, font, color: slate });
+    page.drawText(signedDate.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}), { x: marginX + 130, y, size: 11, font: fontBold, color: ink });
+    y -= 30;
+
+    const pngBytes = dataUrlToBytes(ps.signatureDataUrl);
+    const pngImage = await pdfDoc.embedPng(pngBytes);
+    const sigDims = pngImage.scaleToFit(180, 60);
+    page.drawText('Signature:', { x: marginX, y: y, size: 11, font, color: slate });
+    page.drawImage(pngImage, { x: marginX + 130, y: y - sigDims.height + 12, width: sigDims.width, height: sigDims.height });
+    y -= (sigDims.height + 30);
+  }
+
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'certificate-of-acknowledgement.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function dataUrlToBytes(dataUrl){
+  const base64 = dataUrl.split(',')[1];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function wrapText(text, font, size, maxWidth){
+  const words = text.split(' ');
+  let lines = [];
+  let current = '';
+  words.forEach(word => {
+    const test = current ? current + ' ' + word : word;
+    if (font.widthOfTextAtSize(test, size) > maxWidth){
+      lines.push(current);
+      current = word;
+    } else {
+      current = test;
+    }
+  });
+  if (current) lines.push(current);
+  return lines.join('\n');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function resizeCanvas(canvas){
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width = canvas.offsetWidth * ratio;
+  canvas.height = canvas.offsetHeight * ratio;
+  canvas.getContext('2d').scale(ratio, ratio);
+}
+
+init();
+</script>
+
+</body>
+</html>
